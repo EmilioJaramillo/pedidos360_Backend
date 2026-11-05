@@ -31,3 +31,38 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Documentacion y diseño (no se versiona) ###
+docs/
+*.drawio
+*.drawio.bkp
+*.docx
+*.doc
+*.pdf
+*.pptx
+*.xlsx
+~$*
+
+### Logs y temporales ###
+logs/
+*.log
+nohup.out
+*.tmp
+
+### Secretos / credenciales (AWS, env) ###
+.env
+.env.*
+*.pem
+*.key
+*.ppk
+
+### Artefactos ###
+*.jar
+*.war
+
+### Herramientas locales ###
+.claude/
+
+### Sistema ###
+.DS_Store
+Thumbs.db
