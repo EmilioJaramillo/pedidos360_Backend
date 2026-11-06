@@ -39,6 +39,7 @@ suspel:
   inventario:
     umbral-stock-bajo: 300
   rabbit:
+    tipo-mensaje: producto-evento
     exchanges:
       inventario: suspel.inventario.topic
       operaciones: suspel.operaciones.direct
