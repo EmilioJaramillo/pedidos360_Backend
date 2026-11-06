@@ -43,16 +43,21 @@ public class ManejadorMensajes {
 	}
 
 	public void procesar(Message message, Channel channel, Consumer<ProductoEvento> accion) throws IOException {
+		procesar(message, channel, ProductoEvento.class, accion);
+	}
+
+	public <T extends MensajeValidable> void procesar(Message message, Channel channel, Class<T> tipo,
+			Consumer<T> accion) throws IOException {
 		MessageProperties propiedades = message.getMessageProperties();
 		long tag = propiedades.getDeliveryTag();
 		String cola = propiedades.getConsumerQueue();
 		int intento = intentoActual(propiedades);
 
 		try {
-			ProductoEvento evento = leer(message);
-			accion.accept(evento);
+			T mensaje = leer(message, tipo);
+			accion.accept(mensaje);
 			channel.basicAck(tag, false);
-			log.info("[{}] ACK evento={} tipo={} intento={}", cola, evento.eventoId(), evento.tipo(), intento);
+			log.info("[{}] ACK {} id={} intento={}", cola, tipo.getSimpleName(), propiedades.getMessageId(), intento);
 		}
 		catch (MensajeInvalidoException ex) {
 			enviarADlq(channel, tag, cola, propiedades, "mensaje invalido: " + ex.getMessage());
@@ -75,19 +80,16 @@ public class ManejadorMensajes {
 		}
 	}
 
-	private ProductoEvento leer(Message message) {
-		ProductoEvento evento;
+	private <T extends MensajeValidable> T leer(Message message, Class<T> tipo) {
+		T mensaje;
 		try {
-			evento = objectMapper.readValue(message.getBody(), ProductoEvento.class);
+			mensaje = objectMapper.readValue(message.getBody(), tipo);
 		}
 		catch (IOException ex) {
 			throw new MensajeInvalidoException("JSON no valido");
 		}
-		if (evento.eventoId() == null || evento.tipo() == null || evento.productoId() == null
-				|| evento.nombre() == null || evento.nombre().isBlank()) {
-			throw new MensajeInvalidoException("faltan campos obligatorios (eventoId, tipo, productoId, nombre)");
-		}
-		return evento;
+		mensaje.validar();
+		return mensaje;
 	}
 
 	private void enviarADlq(Channel channel, long tag, String cola, MessageProperties propiedades, String motivo)

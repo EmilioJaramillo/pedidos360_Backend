@@ -11,5 +11,12 @@ public record ProductoEvento(
 		String bodega,
 		Integer cantidad,
 		String usuario,
-		Instant fecha) {
+		Instant fecha) implements MensajeValidable {
+
+	@Override
+	public void validar() {
+		if (eventoId == null || tipo == null || productoId == null || nombre == null || nombre.isBlank()) {
+			throw new MensajeInvalidoException("faltan campos obligatorios (eventoId, tipo, productoId, nombre)");
+		}
+	}
 }

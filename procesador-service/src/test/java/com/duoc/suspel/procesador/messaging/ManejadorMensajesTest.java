@@ -35,7 +35,7 @@ class ManejadorMensajesTest {
 	void setUp() {
 		channel = mock(Channel.class);
 		rabbitTemplate = mock(RabbitTemplate.class);
-		RabbitProperties props = new RabbitProperties(3, null, null, null);
+		RabbitProperties props = new RabbitProperties(3, 10, null, null, null);
 		manejador = new ManejadorMensajes(new ObjectMapper().registerModule(new JavaTimeModule()), rabbitTemplate,
 				props);
 	}

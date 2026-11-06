@@ -16,6 +16,7 @@ Backend de Pedidos360 compuesto por tres microservicios Spring Boot 3.5 (Java 17
 | `suspel.inventario.topic` | topic | `producto.#` | `q.auditoria` | `q.auditoria.dlq` |
 | `suspel.operaciones.direct` | direct | `stock.bajo` | `q.notificaciones` | `q.notificaciones.dlq` |
 | `suspel.operaciones.direct` | direct | `documento.ficha` | `q.documentos` | `q.documentos.dlq` |
+| `suspel.emergencias.topic` | topic | `emergencia.#` | `q.emergencias` (prioridad 0-10) | `q.emergencias.dlq` |
 
 Las DLQ reciben los mensajes rechazados a través del exchange `suspel.dlx` (direct). Los nombres se definen en el `application.yml` de cada servicio, bajo `suspel.rabbit`.
 
@@ -82,9 +83,11 @@ docker compose ps
 |---|---|---|
 | productos-service | GET, POST | `/api/productos` |
 | productos-service | GET, PUT, DELETE | `/api/productos/{id}` |
+| productos-service | POST | `/api/emergencias` |
 | procesador-service | GET | `/api/actividad/auditoria` |
 | procesador-service | GET | `/api/actividad/notificaciones` |
 | procesador-service | GET | `/api/actividad/fichas` |
+| procesador-service | GET | `/api/actividad/emergencias` |
 | rabbit-admin-service | GET, POST | `/api/admin/queues` |
 | rabbit-admin-service | GET, DELETE | `/api/admin/queues/{nombre}` |
 | rabbit-admin-service | DELETE | `/api/admin/queues/{nombre}/messages` (purga) |
@@ -102,3 +105,7 @@ POST /api/admin/bindings   {"exchange": "suspel.reportes.topic", "cola": "q.repo
 ```
 
 Respuestas: `201` creado, `204` eliminado, `400` datos inválidos (con detalle por campo), `404` no existe, `409` ya existe o es un recurso del sistema (`suspel.rabbit-admin.recursos-protegidos`), `503` RabbitMQ no disponible.
+
+## Avisos de emergencia
+
+`POST /api/emergencias {"bodega": "Bodega 5", "tipo": "INCENDIO", "detalle": "..."}` publica en `suspel.emergencias.topic` un aviso con las sustancias de la bodega. La cola `q.emergencias` tiene `x-max-priority: 10`: un incendio (9) se despacha antes que una fuga de gas (7) o un derrame (5) aunque haya llegado después. `procesador-service` registra el aviso con folio `EM-000001` y lo deja en el log como despacho a Bomberos (simulado). Si RabbitMQ no recibe el aviso, la API responde `503` en lugar de perderlo en silencio.

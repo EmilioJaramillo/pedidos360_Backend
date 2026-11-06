@@ -34,23 +34,31 @@ suspel:
     allowed-origins: http://localhost:4200
   notificaciones:
     canal-disponible: ${CANAL_NOTIFICACIONES:true}
+  emergencias:
+    destino: Bomberos (132)
   rabbit:
     max-intentos: 3
+    max-prioridad: 10
     exchanges:
       inventario: suspel.inventario.topic
       operaciones: suspel.operaciones.direct
+      emergencias: suspel.emergencias.topic
       dlx: suspel.dlx
     queues:
       auditoria: q.auditoria
       notificaciones: q.notificaciones
       documentos: q.documentos
+      emergencias: q.emergencias
       auditoria-dlq: q.auditoria.dlq
       notificaciones-dlq: q.notificaciones.dlq
       documentos-dlq: q.documentos.dlq
+      emergencias-dlq: q.emergencias.dlq
     routing-keys:
       auditoria: producto.#
       stock-bajo: stock.bajo
       documento-ficha: documento.ficha
+      emergencias: emergencia.#
+      emergencias-dlq: emergencias.dlq
       auditoria-dlq: auditoria.dlq
       notificaciones-dlq: notificaciones.dlq
       documentos-dlq: documentos.dlq

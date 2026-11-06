@@ -22,7 +22,7 @@ public class SecurityConfig {
 				.cors(Customizer.withDefaults())
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-						.requestMatchers("/api/productos/**").hasAuthority("SCOPE_" + requiredScope)
+						.requestMatchers("/api/productos/**", "/api/emergencias/**").hasAuthority("SCOPE_" + requiredScope)
 						.anyRequest().permitAll())
 				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 		return http.build();

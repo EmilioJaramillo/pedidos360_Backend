@@ -38,14 +38,21 @@ suspel:
     allowed-origins: http://localhost:4200
   inventario:
     umbral-stock-bajo: 300
+    bodegas: Bodega 5, Bodega 6, Bodega 7, Bodega 8
   rabbit:
     tipo-mensaje: producto-evento
+    tipo-mensaje-emergencia: emergencia-evento
     exchanges:
       inventario: suspel.inventario.topic
       operaciones: suspel.operaciones.direct
+      emergencias: suspel.emergencias.topic
     routing-keys:
       producto-creado: producto.creado
       producto-actualizado: producto.actualizado
       producto-eliminado: producto.eliminado
       stock-bajo: stock.bajo
       documento-ficha: documento.ficha
+    routing-keys-emergencia:
+      INCENDIO: emergencia.incendio
+      DERRAME: emergencia.derrame
+      FUGA_GAS: emergencia.fuga-gas

@@ -4,6 +4,8 @@ import com.duoc.suspel.procesador.auditoria.AuditoriaService;
 import com.duoc.suspel.procesador.auditoria.RegistroAuditoria;
 import com.duoc.suspel.procesador.documento.FichaAlmacenamiento;
 import com.duoc.suspel.procesador.documento.FichaService;
+import com.duoc.suspel.procesador.emergencia.AvisoEmergencia;
+import com.duoc.suspel.procesador.emergencia.EmergenciaService;
 import com.duoc.suspel.procesador.notificacion.Notificacion;
 import com.duoc.suspel.procesador.notificacion.NotificacionService;
 import java.util.List;
@@ -18,12 +20,19 @@ public class ActividadController {
 	private final AuditoriaService auditoriaService;
 	private final NotificacionService notificacionService;
 	private final FichaService fichaService;
+	private final EmergenciaService emergenciaService;
 
 	public ActividadController(AuditoriaService auditoriaService, NotificacionService notificacionService,
-			FichaService fichaService) {
+			FichaService fichaService, EmergenciaService emergenciaService) {
 		this.auditoriaService = auditoriaService;
 		this.notificacionService = notificacionService;
 		this.fichaService = fichaService;
+		this.emergenciaService = emergenciaService;
+	}
+
+	@GetMapping("/emergencias")
+	public List<AvisoEmergencia> emergencias() {
+		return emergenciaService.listar();
 	}
 
 	@GetMapping("/auditoria")

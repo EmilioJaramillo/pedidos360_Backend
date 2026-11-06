@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
  * suspel.inventario.topic   --producto.#-------> q.auditoria       --(dlx) auditoria.dlq------> q.auditoria.dlq
  * suspel.operaciones.direct --stock.bajo-------> q.notificaciones  --(dlx) notificaciones.dlq-> q.notificaciones.dlq
  * suspel.operaciones.direct --documento.ficha--> q.documentos      --(dlx) documentos.dlq-----> q.documentos.dlq
+ * suspel.emergencias.topic  --emergencia.#-----> q.emergencias     --(dlx) emergencias.dlq----> q.emergencias.dlq
  * </pre>
  *
  * Los mensajes rechazados con NACK (requeue=false) se reenvian por suspel.dlx a la DLQ de su cola.
@@ -114,6 +115,38 @@ public class RabbitTopologyConfig {
 	@Bean
 	Binding documentosDlqBinding() {
 		return BindingBuilder.bind(documentosDlq()).to(dlxExchange()).with(props.routingKeys().documentosDlq());
+	}
+
+	// Emergencias: avisos a Bomberos con prioridad (incendio 9, fuga de gas 7, derrame 5).
+
+	@Bean
+	TopicExchange emergenciasExchange() {
+		return ExchangeBuilder.topicExchange(props.exchanges().emergencias()).durable(true).build();
+	}
+
+	@Bean
+	Queue emergenciasQueue() {
+		return QueueBuilder.durable(props.queues().emergencias())
+				.maxPriority(props.maxPrioridad())
+				.deadLetterExchange(props.exchanges().dlx())
+				.deadLetterRoutingKey(props.routingKeys().emergenciasDlq())
+				.build();
+	}
+
+	@Bean
+	Queue emergenciasDlq() {
+		return QueueBuilder.durable(props.queues().emergenciasDlq()).build();
+	}
+
+	@Bean
+	Binding emergenciasBinding() {
+		return BindingBuilder.bind(emergenciasQueue()).to(emergenciasExchange())
+				.with(props.routingKeys().emergencias());
+	}
+
+	@Bean
+	Binding emergenciasDlqBinding() {
+		return BindingBuilder.bind(emergenciasDlq()).to(dlxExchange()).with(props.routingKeys().emergenciasDlq());
 	}
 
 	private Queue colaConDlq(String nombre, String dlqRoutingKey) {

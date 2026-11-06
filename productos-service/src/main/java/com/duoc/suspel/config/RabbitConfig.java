@@ -1,5 +1,6 @@
 package com.duoc.suspel.config;
 
+import com.duoc.suspel.emergencia.EmergenciaEvento;
 import com.duoc.suspel.messaging.ProductoEvento;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -33,10 +34,21 @@ public class RabbitConfig {
 		return ExchangeBuilder.directExchange(props.exchanges().operaciones()).durable(true).build();
 	}
 
+	/**
+	 * Avisos de emergencia: emergencia.incendio | emergencia.derrame | emergencia.fuga-gas. Topic para que
+	 * otros consumidores (ej. brigada interna) puedan suscribirse sin cambiar el productor.
+	 */
+	@Bean
+	TopicExchange emergenciasExchange(RabbitProperties props) {
+		return ExchangeBuilder.topicExchange(props.exchanges().emergencias()).durable(true).build();
+	}
+
 	@Bean
 	MessageConverter messageConverter(ObjectMapper objectMapper, RabbitProperties props) {
 		DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-		typeMapper.setIdClassMapping(Map.of(props.tipoMensaje(), ProductoEvento.class));
+		typeMapper.setIdClassMapping(Map.of(
+				props.tipoMensaje(), ProductoEvento.class,
+				props.tipoMensajeEmergencia(), EmergenciaEvento.class));
 		Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
 		converter.setJavaTypeMapper(typeMapper);
 		return converter;

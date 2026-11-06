@@ -1,6 +1,7 @@
 package com.duoc.suspel.messaging;
 
 import com.duoc.suspel.config.RabbitProperties;
+import com.duoc.suspel.config.UsuarioActual;
 import com.duoc.suspel.entity.ProductoSuspel;
 import java.time.Instant;
 import java.util.UUID;
@@ -8,9 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,7 +28,7 @@ public class RabbitInventarioEventPublisher implements InventarioEventPublisher 
 	public void publicar(TipoEvento tipo, ProductoSuspel producto) {
 		ProductoEvento evento = new ProductoEvento(UUID.randomUUID().toString(), tipo, producto.getId(),
 				producto.getNombre(), producto.getImo(), producto.getBodega(), producto.getCantidad(),
-				usuarioActual(), Instant.now());
+				UsuarioActual.nombre(), Instant.now());
 		String exchange = exchangePara(tipo);
 		String routingKey = routingKeyPara(tipo);
 		try {
@@ -62,14 +60,5 @@ public class RabbitInventarioEventPublisher implements InventarioEventPublisher 
 			case STOCK_BAJO -> keys.stockBajo();
 			case FICHA_SOLICITADA -> keys.documentoFicha();
 		};
-	}
-
-	private String usuarioActual() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth instanceof JwtAuthenticationToken jwt) {
-			String username = jwt.getToken().getClaimAsString("username");
-			return username != null ? username : jwt.getName();
-		}
-		return "sistema";
 	}
 }

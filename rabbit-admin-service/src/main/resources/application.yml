@@ -27,6 +27,7 @@ suspel:
     recursos-protegidos:
       - suspel.inventario.topic
       - suspel.operaciones.direct
+      - suspel.emergencias.topic
       - suspel.dlx
       - q.auditoria
       - q.notificaciones
@@ -34,3 +35,5 @@ suspel:
       - q.auditoria.dlq
       - q.notificaciones.dlq
       - q.documentos.dlq
+      - q.emergencias
+      - q.emergencias.dlq
