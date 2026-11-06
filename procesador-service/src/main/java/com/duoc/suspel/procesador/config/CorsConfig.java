@@ -1,4 +1,4 @@
-package com.duoc.suspel.config;
+package com.duoc.suspel.procesador.config;
 
 import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,12 +8,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Expone un CorsConfigurationSource como bean para que Spring Security
- * (SecurityConfig.cors(...)) lo use antes de aplicar autorizacion. Un
- * WebMvcConfigurer normal no es suficiente: Spring Security procesa la
- * peticion antes de que llegue al DispatcherServlet.
- */
+/** CORS para el frontend; Spring Security lo aplica antes de la autorizacion. */
 @Configuration
 public class CorsConfig {
 

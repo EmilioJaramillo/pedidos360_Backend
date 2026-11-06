@@ -1,0 +1,54 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: procesador-service
+  datasource:
+    url: jdbc:h2:mem:procesadordb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_3xGcPKuwF
+  rabbitmq:
+    addresses: ${RABBIT_ADDRESSES:localhost:5672,localhost:5673}
+    username: ${RABBIT_USER:suspel}
+    password: ${RABBIT_PASS:suspel}
+    listener:
+      simple:
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+        prefetch: 10
+
+suspel:
+  security:
+    scope: suspel-api/productos-access
+  cors:
+    allowed-origins: http://localhost:4200
+  rabbit:
+    max-intentos: 3
+    exchanges:
+      inventario: suspel.inventario.topic
+      operaciones: suspel.operaciones.direct
+      dlx: suspel.dlx
+    queues:
+      auditoria: q.auditoria
+      notificaciones: q.notificaciones
+      documentos: q.documentos
+      auditoria-dlq: q.auditoria.dlq
+      notificaciones-dlq: q.notificaciones.dlq
+      documentos-dlq: q.documentos.dlq
+    routing-keys:
+      auditoria: producto.#
+      stock-bajo: stock.bajo
+      documento-ficha: documento.ficha
+      auditoria-dlq: auditoria.dlq
+      notificaciones-dlq: notificaciones.dlq
+      documentos-dlq: documentos.dlq

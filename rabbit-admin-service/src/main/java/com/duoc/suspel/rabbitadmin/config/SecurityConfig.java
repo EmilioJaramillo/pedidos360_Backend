@@ -1,4 +1,4 @@
-package com.duoc.suspel.config;
+package com.duoc.suspel.rabbitadmin.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,12 +8,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Backend como OAuth2 Resource Server (BFF). Valida el Access Token emitido por
- * Amazon Cognito (issuer, firma, expiracion) y exige el custom scope de la API.
- * Esta validacion es la segunda capa de Defense in Depth: API Gateway ya valido
- * el mismo token antes de reenviar la peticion a EC2.
- */
 @Configuration
 public class SecurityConfig {
 
@@ -27,9 +21,9 @@ public class SecurityConfig {
 				.cors(Customizer.withDefaults())
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-						.requestMatchers("/api/productos/**").hasAuthority("SCOPE_" + requiredScope)
+						.requestMatchers("/api/admin/**").hasAuthority("SCOPE_" + requiredScope)
 						.anyRequest().permitAll())
-				.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 		return http.build();
 	}
 }

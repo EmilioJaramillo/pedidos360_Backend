@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: productos-service
+  datasource:
+    url: jdbc:h2:mem:suspeldb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+    show-sql: true
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_3xGcPKuwF
+  rabbitmq:
+    addresses: ${RABBIT_ADDRESSES:localhost:5672,localhost:5673}
+    username: ${RABBIT_USER:suspel}
+    password: ${RABBIT_PASS:suspel}
+
+suspel:
+  security:
+    scope: suspel-api/productos-access
+  cors:
+    allowed-origins: http://localhost:4200
+  inventario:
+    umbral-stock-bajo: 300
+  rabbit:
+    exchanges:
+      inventario: suspel.inventario.topic
+      operaciones: suspel.operaciones.direct
+    routing-keys:
+      producto-creado: producto.creado
+      producto-actualizado: producto.actualizado
+      producto-eliminado: producto.eliminado
+      stock-bajo: stock.bajo
+      documento-ficha: documento.ficha

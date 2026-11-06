@@ -1,47 +1,71 @@
-# Pedidos360 / Suspel Backend (Spring Boot)
+# Pedidos360 / Suspel Backend
 
-API REST de productos Suspel (`/api/productos`). Actúa como **OAuth2 Resource Server**: valida el Access Token JWT emitido por Amazon Cognito (firma, issuer) y exige el scope `suspel-api/productos-access`. Es la segunda capa de validación (Defense in Depth); la primera es el Cognito Authorizer de API Gateway.
+Backend de Pedidos360 compuesto por tres microservicios Spring Boot 3.5 (Java 17) y un clúster RabbitMQ de dos nodos. Todos validan el access token JWT emitido por Amazon Cognito y exigen el scope `suspel-api/productos-access`.
 
-## Requisitos
+| Servicio | Puerto | Rol |
+|---|---|---|
+| `productos-service` | 8080 | CRUD de productos Suspel (`/api/productos`). Publica eventos de inventario. |
+| `procesador-service` | 8081 | Consumidores RabbitMQ: auditoría, notificaciones y documentos. |
+| `rabbit-admin-service` | 8082 | API REST para administrar colas, exchanges y bindings (`/api/admin`). |
+| `rabbit1`, `rabbit2` | 5672/15672, 5673/15673 | Clúster RabbitMQ (management UI en 15672 y 15673). |
 
-- Java 17 o superior (se usa el Maven Wrapper incluido)
+## Mensajería
 
-## Ejecutar en local
+| Exchange | Tipo | Routing key | Cola | DLQ |
+|---|---|---|---|---|
+| `suspel.inventario.topic` | topic | `producto.#` | `q.auditoria` | `q.auditoria.dlq` |
+| `suspel.operaciones.direct` | direct | `stock.bajo` | `q.notificaciones` | `q.notificaciones.dlq` |
+| `suspel.operaciones.direct` | direct | `documento.ficha` | `q.documentos` | `q.documentos.dlq` |
+
+Las DLQ reciben los mensajes rechazados a través del exchange `suspel.dlx` (direct). Los nombres se definen en el `application.yml` de cada servicio, bajo `suspel.rabbit`.
+
+## Ejecutar
+
+Requisitos: Docker con Compose y Java 17 o superior.
 
 ```bash
-./mvnw spring-boot:run
+cp .env.example .env          # definir usuario, password y cookie de RabbitMQ
+docker compose up -d --build  # clúster RabbitMQ + 3 microservicios
 ```
 
-Escucha en el puerto 8080. Sin token responde 401; con un token sin el scope requerido, 403.
+Solo RabbitMQ (para ejecutar los servicios desde el IDE):
 
-## Configuración (`src/main/resources/application.properties`)
+```bash
+docker compose up -d rabbit1 rabbit2
+cd productos-service && ./mvnw spring-boot:run
+```
 
-| Propiedad | Uso |
+Verificar el clúster:
+
+```bash
+docker compose exec rabbit1 rabbitmqctl cluster_status
+```
+
+## Configuración común
+
+| Propiedad / variable | Uso |
 |---|---|
+| `RABBIT_ADDRESSES` | Nodos del clúster (por defecto `localhost:5672,localhost:5673`) |
+| `RABBIT_USER`, `RABBIT_PASS` | Credenciales de RabbitMQ |
 | `spring.security.oauth2.resourceserver.jwt.issuer-uri` | Issuer del User Pool de Cognito |
-| `suspel.security.scope` | Scope exigido en `/api/productos/**` |
+| `suspel.security.scope` | Scope exigido por la API |
 | `suspel.cors.allowed-origins` | Orígenes permitidos (frontend Angular) |
 
-Base de datos: H2 en memoria, se reinicia con los datos de `data.sql` en cada arranque.
+Base de datos: H2 en memoria en `productos-service` (datos iniciales en `data.sql`) y en `procesador-service`.
 
-## Despliegue en EC2 (vía S3)
+## Despliegue en EC2
+
+La instancia (t3.medium o superior) necesita Docker y Git. El Security Group debe abrir 8080 (API Gateway) y, para la administración, 8081, 8082, 15672 y 15673.
 
 ```bash
-# en el equipo de desarrollo
-./mvnw clean package -DskipTests
-# subir target/suspel-backend.jar al bucket S3 (consola web)
-
-# en la instancia EC2
-aws s3 cp s3://<BUCKET>/suspel-backend.jar ./suspel-backend.jar
-sudo systemctl restart suspel
-sudo journalctl -u suspel -n 5 --no-pager
+git clone https://github.com/EmilioJaramillo/pedidos360_Backend.git
+cd pedidos360_Backend
+cp .env.example .env && nano .env
+docker compose up -d --build
+docker compose ps
 ```
 
-La instancia usa el IAM Role asociado para leer el bucket (sin credenciales estáticas). El Security Group debe permitir el puerto 8080.
-
-El backend corre como servicio `systemd` (`/etc/systemd/system/suspel.service`, ejecuta `java -jar /home/ec2-user/suspel-backend.jar` con `Restart=on-failure`) y arranca solo al iniciar la instancia.
-
-## Endpoints
+## Endpoints de productos-service
 
 | Método | Ruta |
 |---|---|

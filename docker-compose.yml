@@ -1,0 +1,73 @@
+name: pedidos360
+
+x-rabbit: &rabbit
+  image: rabbitmq:3.13-management
+  environment:
+    RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+    RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
+    RABBITMQ_ERLANG_COOKIE: ${RABBIT_COOKIE}
+  healthcheck:
+    test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+    interval: 10s
+    timeout: 10s
+    retries: 10
+  restart: unless-stopped
+
+x-app: &app
+  environment:
+    RABBIT_ADDRESSES: rabbit1:5672,rabbit2:5672
+    RABBIT_USER: ${RABBIT_USER}
+    RABBIT_PASS: ${RABBIT_PASS}
+    JAVA_TOOL_OPTIONS: -Xmx256m
+  depends_on:
+    rabbit1:
+      condition: service_healthy
+    rabbit2:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  rabbit1:
+    <<: *rabbit
+    hostname: rabbit1
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq/cluster.conf:/etc/rabbitmq/conf.d/20-cluster.conf:ro
+      - rabbit1-data:/var/lib/rabbitmq
+
+  rabbit2:
+    <<: *rabbit
+    hostname: rabbit2
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - ./rabbitmq/cluster.conf:/etc/rabbitmq/conf.d/20-cluster.conf:ro
+      - rabbit2-data:/var/lib/rabbitmq
+    depends_on:
+      rabbit1:
+        condition: service_healthy
+
+  productos-service:
+    <<: *app
+    build: ./productos-service
+    ports:
+      - "8080:8080"
+
+  procesador-service:
+    <<: *app
+    build: ./procesador-service
+    ports:
+      - "8081:8081"
+
+  rabbit-admin-service:
+    <<: *app
+    build: ./rabbit-admin-service
+    ports:
+      - "8082:8082"
+
+volumes:
+  rabbit1-data:
+  rabbit2-data:

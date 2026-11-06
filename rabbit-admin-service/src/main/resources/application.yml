@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: rabbit-admin-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_3xGcPKuwF
+  rabbitmq:
+    addresses: ${RABBIT_ADDRESSES:localhost:5672,localhost:5673}
+    username: ${RABBIT_USER:suspel}
+    password: ${RABBIT_PASS:suspel}
+
+suspel:
+  security:
+    scope: suspel-api/productos-access
+  cors:
+    allowed-origins: http://localhost:4200
+  rabbit-admin:
+    nombre-patron: "^[a-z0-9][a-z0-9._-]{2,63}$"
+    recursos-protegidos:
+      - suspel.inventario.topic
+      - suspel.operaciones.direct
+      - suspel.dlx
+      - q.auditoria
+      - q.notificaciones
+      - q.documentos
+      - q.auditoria.dlq
+      - q.notificaciones.dlq
+      - q.documentos.dlq
