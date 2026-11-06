@@ -19,6 +19,17 @@ Backend de Pedidos360 compuesto por tres microservicios Spring Boot 3.5 (Java 17
 
 Las DLQ reciben los mensajes rechazados a través del exchange `suspel.dlx` (direct). Los nombres se definen en el `application.yml` de cada servicio, bajo `suspel.rabbit`.
 
+Confirmación de mensajes en `procesador-service` (`acknowledge-mode: manual`, clase `ManejadorMensajes`):
+
+| Resultado | Acción |
+|---|---|
+| Procesado correctamente | `basicAck` |
+| JSON inválido, campos faltantes o clase IMO desconocida | `basicNack(requeue=false)` → DLQ |
+| Error recuperable (canal de notificaciones o BD no disponible) | Se republica con `x-intentos + 1`; al superar `max-intentos` (3) → DLQ |
+| Error no controlado | `basicNack(requeue=false)` → DLQ |
+
+Cada envío a DLQ queda registrado en el log con la cola, el `message_id` y el motivo. Para simular un error recuperable: `CANAL_NOTIFICACIONES=false`.
+
 ## Ejecutar
 
 Requisitos: Docker con Compose y Java 17 o superior.
@@ -65,9 +76,12 @@ docker compose up -d --build
 docker compose ps
 ```
 
-## Endpoints de productos-service
+## Endpoints
 
-| Método | Ruta |
-|---|---|
-| GET, POST | `/api/productos` |
-| GET, PUT, DELETE | `/api/productos/{id}` |
+| Servicio | Método | Ruta |
+|---|---|---|
+| productos-service | GET, POST | `/api/productos` |
+| productos-service | GET, PUT, DELETE | `/api/productos/{id}` |
+| procesador-service | GET | `/api/actividad/auditoria` |
+| procesador-service | GET | `/api/actividad/notificaciones` |
+| procesador-service | GET | `/api/actividad/fichas` |

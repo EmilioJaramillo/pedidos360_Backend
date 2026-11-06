@@ -32,6 +32,8 @@ suspel:
     scope: suspel-api/productos-access
   cors:
     allowed-origins: http://localhost:4200
+  notificaciones:
+    canal-disponible: ${CANAL_NOTIFICACIONES:true}
   rabbit:
     max-intentos: 3
     exchanges:
