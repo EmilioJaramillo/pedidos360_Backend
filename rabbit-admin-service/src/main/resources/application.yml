@@ -20,7 +20,10 @@ suspel:
   cors:
     allowed-origins: http://localhost:4200
   rabbit-admin:
-    nombre-patron: "^[a-z0-9][a-z0-9._-]{2,63}$"
+    management-url: ${RABBIT_MGMT_URL:http://localhost:15672/api}
+    vhost: /
+    dlx: suspel.dlx
+    sufijo-dlq: .dlq
     recursos-protegidos:
       - suspel.inventario.topic
       - suspel.operaciones.direct

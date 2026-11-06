@@ -85,3 +85,20 @@ docker compose ps
 | procesador-service | GET | `/api/actividad/auditoria` |
 | procesador-service | GET | `/api/actividad/notificaciones` |
 | procesador-service | GET | `/api/actividad/fichas` |
+| rabbit-admin-service | GET, POST | `/api/admin/queues` |
+| rabbit-admin-service | GET, DELETE | `/api/admin/queues/{nombre}` |
+| rabbit-admin-service | DELETE | `/api/admin/queues/{nombre}/messages` (purga) |
+| rabbit-admin-service | GET, POST | `/api/admin/exchanges` |
+| rabbit-admin-service | DELETE | `/api/admin/exchanges/{nombre}` |
+| rabbit-admin-service | GET, POST | `/api/admin/bindings` |
+| rabbit-admin-service | DELETE | `/api/admin/bindings?exchange=&cola=&routingKey=` |
+
+Ejemplos de `rabbit-admin-service`:
+
+```json
+POST /api/admin/queues     {"nombre": "q.reportes", "conDlq": true, "ttlMs": 60000}
+POST /api/admin/exchanges  {"nombre": "suspel.reportes.topic", "tipo": "TOPIC"}
+POST /api/admin/bindings   {"exchange": "suspel.reportes.topic", "cola": "q.reportes", "routingKey": "reporte.#"}
+```
+
+Respuestas: `201` creado, `204` eliminado, `400` datos inválidos (con detalle por campo), `404` no existe, `409` ya existe o es un recurso del sistema (`suspel.rabbit-admin.recursos-protegidos`), `503` RabbitMQ no disponible.
